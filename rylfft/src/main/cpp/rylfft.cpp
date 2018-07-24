@@ -25,6 +25,7 @@ Java_by_solveit_rylfft_RYLFFT_getSpeechSpectrumEnergy(
     jdouble result = 0;
     for (int i = (int) minFrequencyIndex; i < maxFrequencyIndex; i++)
         result += hypot(real[i], imag[i]);
+    result = result * sampleRate / count;
     env->ReleaseShortArrayElements(samples, samplesArray, 0);
     return result;
 }
