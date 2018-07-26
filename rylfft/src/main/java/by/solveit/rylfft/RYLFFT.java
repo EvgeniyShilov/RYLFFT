@@ -6,7 +6,7 @@ public class RYLFFT {
         System.loadLibrary("rylfft");
     }
 
-    public static native double getSpeechSpectrumEnergy(
+    public static native double getSpeechSpectrumEnergyCoefficient(
             short[] samples,
             int count,
             int sampleRate,
