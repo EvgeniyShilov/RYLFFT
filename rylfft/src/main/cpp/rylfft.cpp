@@ -23,15 +23,15 @@ Java_by_solveit_rylfft_RYLFFT_getSpeechSpectrumEnergyCoefficient(
     Fft::transform(real, imag);
     const double minFrequencyIndex = minFrequency * count / sampleRate;
     const double maxFrequencyIndex = maxFrequency * count / sampleRate;
+    double totalEnergy = 0;
     double energyInRange = 0;
-    double energyOutOfRange = 0;
     for (int i = 0; i < count / 2; i++) {
         double amplitude = hypot(real[i], imag[i]);
+        totalEnergy += amplitude;
         if (i >= minFrequencyIndex && i <= maxFrequencyIndex)
             energyInRange += amplitude;
-        else energyOutOfRange += amplitude;
     }
-    const jdouble result = energyOutOfRange != 0 ? energyInRange / energyOutOfRange : -1;
+    const jdouble result = totalEnergy != 0 ? energyInRange / totalEnergy : -1;
     env->ReleaseShortArrayElements(samples, samplesArray, 0);
     return result;
 }
