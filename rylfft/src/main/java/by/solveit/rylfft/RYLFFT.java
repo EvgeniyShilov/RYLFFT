@@ -3,7 +3,7 @@ package by.solveit.rylfft;
 public class RYLFFT {
 
     static {
-        System.loadLibrary("rylfft");
+        LibraryLoader.load();
     }
 
     public static native double getSpeechSpectrumEnergyCoefficient(
