@@ -8,16 +8,19 @@ static const double MAX_DOUBLE_VALUE = 0x1.fffffffffffffP+1023;
 static const char *NAME_FRAME_SIZE = "frameSize";
 static const char *NAME_ENVELOPE_GROWTH_FACTOR = "envelopeGrowthFactor";
 static const char *NAME_ENVELOPE_RECESSION_FACTOR = "envelopeRecessionFactor";
+static const char *NAME_STATIC_MULTIPLIER = "staticMultiplier";
 static const char *NAME_ENVELOPE_VALUE = "envelopeValue";
 
 static const char *SIG_FRAME_SIZE = "I";
 static const char *SIG_ENVELOPE_GROWTH_FACTOR = "D";
 static const char *SIG_ENVELOPE_RECESSION_FACTOR = "D";
+static const char *SIG_STATIC_MULTIPLIER = "D";
 static const char *SIG_ENVELOPE_VALUE = "D";
 
 static jfieldID idFrameSize = NULL;
 static jfieldID idEnvelopeGrowthFactor = NULL;
 static jfieldID idEnvelopeRecessionFactor = NULL;
+static jfieldID idStaticMultiplier = NULL;
 static jfieldID idEnvelopeValue = NULL;
 
 static jclass classGainControl = NULL;
@@ -27,6 +30,8 @@ jint getFrameSize(JNIEnv *env, jobject instance);
 jdouble getEnvelopeGrowthFactor(JNIEnv *env, jobject instance);
 
 jdouble getEnvelopeRecessionFactor(JNIEnv *env, jobject instance);
+
+jdouble getStaticMultiplier(JNIEnv *env, jobject instance);
 
 jdouble getEnvelopeValue(JNIEnv *env, jobject instance);
 
@@ -89,6 +94,7 @@ Java_by_solveit_rylfft_RYLGainControl_controlGain(JNIEnv *env,
     const jint frameSize = getFrameSize(env, instance);
     const jdouble growthFactor = getEnvelopeGrowthFactor(env, instance);
     const jdouble recessionFactor = getEnvelopeRecessionFactor(env, instance);
+    const jdouble staticMultiplier = getStaticMultiplier(env, instance);
     for (int i = 0; i < sampleCount; i += frameSize) {
         double level = 0;
         for (int j = i; j < i + frameSize && j < sampleCount; j++)
@@ -100,7 +106,7 @@ Java_by_solveit_rylfft_RYLGainControl_controlGain(JNIEnv *env,
         setEnvelopeValue(env, instance, currentValue);
         const double gainMultiplier = currentValue != 0 ? 1 / currentValue : MAX_DOUBLE_VALUE;
         for (int j = i; j < i + frameSize && j < sampleCount; j++) {
-            sampleBuffer[j] *= gainMultiplier;
+            sampleBuffer[j] *= gainMultiplier * staticMultiplier;
             if (sampleBuffer[j] > 1) sampleBuffer[j] = 1;
             else if (sampleBuffer[j] < -1) sampleBuffer[j] = -1;
         }
@@ -153,6 +159,16 @@ jdouble getEnvelopeRecessionFactor(JNIEnv *env, jobject instance) {
                 SIG_ENVELOPE_RECESSION_FACTOR
         );
     return env->GetDoubleField(instance, idEnvelopeRecessionFactor);
+}
+
+jdouble getStaticMultiplier(JNIEnv *env, jobject instance) {
+    if (idStaticMultiplier == NULL)
+        idStaticMultiplier = env->GetFieldID(
+                getGainControlClass(env, instance),
+                NAME_STATIC_MULTIPLIER,
+                SIG_STATIC_MULTIPLIER
+        );
+    return env->GetDoubleField(instance, idStaticMultiplier);
 }
 
 jdouble getEnvelopeValue(JNIEnv *env, jobject instance) {
