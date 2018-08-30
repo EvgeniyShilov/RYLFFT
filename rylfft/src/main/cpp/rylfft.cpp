@@ -76,10 +76,16 @@ Java_by_solveit_rylfft_RYLGainControl_controlGain(JNIEnv *env,
     jbyte *srcBuffer = env->GetByteArrayElements(src, NULL);
     const int sampleCount = bytesCount / 2;
     double sampleBuffer[sampleCount];
-    for (int i = 0; i < sampleCount; i++)
-        sampleBuffer[i] =
-                (short) ((srcBuffer[2 * i] & 0xFF) << 8 | srcBuffer[2 * i + 1] & 0xFF) /
-                (double) MAX_SHORT_VALUE;
+    if (bigEndian)
+        for (int i = 0; i < sampleCount; i++)
+            sampleBuffer[i] =
+                    (short) (((srcBuffer[2 * i] & 0xFF) << 8) | (srcBuffer[2 * i + 1] & 0xFF)) /
+                    (double) MAX_SHORT_VALUE;
+    else
+        for (int i = 0; i < sampleCount; i++)
+            sampleBuffer[i] =
+                    (short) (((srcBuffer[2 * i + 1] & 0xFF) << 8) | (srcBuffer[2 * i] & 0xFF)) /
+                    (double) MAX_SHORT_VALUE;
     const jint frameSize = getFrameSize(env, instance);
     const jdouble growthFactor = getEnvelopeGrowthFactor(env, instance);
     const jdouble recessionFactor = getEnvelopeRecessionFactor(env, instance);
@@ -99,11 +105,18 @@ Java_by_solveit_rylfft_RYLGainControl_controlGain(JNIEnv *env,
             else if (sampleBuffer[j] < -1) sampleBuffer[j] = -1;
         }
     }
-    for (int i = 0; i < sampleCount; i++) {
-        const short value = (short) (sampleBuffer[i] * MAX_SHORT_VALUE);
-        srcBuffer[2 * i] = (jbyte) (value >> 8);
-        srcBuffer[2 * i + 1] = (jbyte) value;
-    }
+    if (bigEndian)
+        for (int i = 0; i < sampleCount; i++) {
+            const short value = (short) (sampleBuffer[i] * MAX_SHORT_VALUE);
+            srcBuffer[2 * i] = (jbyte) (value >> 8);
+            srcBuffer[2 * i + 1] = (jbyte) value;
+        }
+    else
+        for (int i = 0; i < sampleCount; i++) {
+            const short value = (short) (sampleBuffer[i] * MAX_SHORT_VALUE);
+            srcBuffer[2 * i + 1] = (jbyte) (value >> 8);
+            srcBuffer[2 * i] = (jbyte) value;
+        }
     env->ReleaseByteArrayElements(src, srcBuffer, 0);
 }
 
